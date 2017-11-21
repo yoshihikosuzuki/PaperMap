@@ -1,0 +1,21 @@
+{
+  "name": "PaperMap",
+  "version": "1.0.0",
+  "description": "Graphical Application for Paper Survey Management",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yoshihikosuzuki/PaperMap.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yoshihikosuzuki/PaperMap/issues"
+  },
+  "homepage": "https://github.com/yoshihikosuzuki/PaperMap#readme"
+}
