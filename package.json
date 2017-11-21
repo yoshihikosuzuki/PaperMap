@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/yoshihikosuzuki/PaperMap/issues"
   },
-  "homepage": "https://github.com/yoshihikosuzuki/PaperMap#readme"
+  "homepage": "https://github.com/yoshihikosuzuki/PaperMap#readme",
+  "devDependencies": {
+    "electron": "^1.7.9"
+  }
 }
