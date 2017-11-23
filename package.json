@@ -19,6 +19,11 @@
   },
   "homepage": "https://github.com/yoshihikosuzuki/PaperMap#readme",
   "devDependencies": {
-    "electron": "^1.7.9"
+    "electron": "^1.7.9",
+    "neo4j": "^2.0.0-RC2",
+    "neo4j-driver": "^1.5.0"
+  },
+  "dependencies": {
+    "cytoscape": "^3.2.6"
   }
 }

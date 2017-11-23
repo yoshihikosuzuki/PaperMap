@@ -1,2 +1,2 @@
 # PaperMap
-Graphical Application for Paper Survey Management
+Network-based Paper Management Application
