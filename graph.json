@@ -1,0 +1,53 @@
+{
+  "nodes": [
+    {
+      "data": {
+        "id": "a"
+      },
+      "position": {
+        "x": 200,
+        "y": 289
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "classes": ""
+    },
+    {
+      "data": {
+        "id": "b"
+      },
+      "position": {
+        "x": 600,
+        "y": 289
+      },
+      "group": "nodes",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "classes": ""
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "id": "ab",
+        "source": "a",
+        "target": "b"
+      },
+      "position": {},
+      "group": "edges",
+      "removed": false,
+      "selected": false,
+      "selectable": true,
+      "locked": false,
+      "grabbable": true,
+      "classes": ""
+    }
+  ]
+}
