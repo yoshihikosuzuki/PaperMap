@@ -3,10 +3,39 @@
   <head>
     <meta charset="UTF-8">
     <link rel="stylesheet", type="text/css", href="vg.css">
+    <link rel="stylesheet", type="text/css", href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet", type="text/css", href="node_modules/bootstrap/dist/css/bootstrap-theme.min.css">
   </head>
   <body>
-    <div id="vg"></div>
-      <script src="vg.js"></script>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-9">
+          <div id="vg"></div>
+        </div>
+        <div class="col-md-3">
+          <div class="input-group">
+            <input id="start-node" class="form-control" type="text" placeholder="(Start) Node Name">
+            <input id="target-node" class="form-control" type="text" placeholder="(Target Node Name)">
+            <button class="btn btn-default btn-sm" type="button" onclick="addElement(document.getElementById('start-node').value, document.getElementById('target-node').value)">Add</button>
+            <button class="btn btn-default btn-sm" type="button" onclick="removeElement(document.getElementById('start-node').value, document.getElementById('target-node').value)">Remove</button>
+            <p id="result-add"></p>
+          </div>
+          <div>
+            <button class="btn btn-default btn-sm" type="button" onclick="generateLabels()">Label</button>
+            <button class="btn btn-default btn-sm" type="button" onclick="graph.clear()">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>window.$ = window.jQuery = require('jquery')</script>
+    <script>
+      $("#vg").on('click', function() {
+        
+      })
+    </script>
+    <script src="vg.js"></script>
     <!-- <script src="vg-renderer.js"></script> -->
+    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
   </body>
 </html>

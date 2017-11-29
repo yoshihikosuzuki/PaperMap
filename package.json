@@ -22,7 +22,9 @@
     "electron": "^1.7.9"
   },
   "dependencies": {
+    "bootstrap": "^3.3.7",
     "cytoscape": "^3.2.6",
+    "jquery": "^3.2.1",
     "vivagraphjs": "^0.10.0"
   }
 }

@@ -11,7 +11,11 @@ function openFile(win) {
 }
 
 function saveFile(win) {
-  win.webContents.send('save')
+  if (openingFile === "") {
+    saveFileAs(win)
+  } else {
+    win.webContents.send('save')
+  }
 }
 
 function saveFileAs(win) {

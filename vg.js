@@ -7,6 +7,15 @@ let fileName = ""
 let graph = Viva.Graph.graph()
 let renderer
 
+function renderGraph() {
+  renderer = Viva.Graph.View.renderer(graph, {
+    container: document.getElementById('vg'),
+    graphics: Viva.Graph.View.svgGraphics()
+    //graphics: Viva.Graph.View.webglGraphics()   // draw using WebGL
+  })
+  renderer.run()
+}
+
 function loadGraphFromJSON(json) {
   const edges_and_nodes = JSON.parse(fs.readFileSync(json, 'utf8'))
   const nodes = edges_and_nodes['nodes']
@@ -20,28 +29,27 @@ function loadGraphFromJSON(json) {
   }
 }
 
-// "Open" via Menu
-ipcRenderer.on('open', (event, jsons) => {
+function openGraph(json) {
+  //console.log(json)
+
   // initialize graph
-  if (typeof renderer !== 'undefined') {
+  if (renderer !== undefined) {
     renderer.dispose()
   }
   graph.clear()
 
   // load a new graph
-  graph.beginUpdate()
-  loadGraphFromJSON(jsons[0])
-  graph.endUpdate()
+  loadGraphFromJSON(json)
 
   // render the graph
-  renderer = Viva.Graph.View.renderer(graph, {
-    container: document.getElementById('vg'),
-    graphics: Viva.Graph.View.svgGraphics()
-    //graphics: Viva.Graph.View.webglGraphics()   // draw using WebGL
-  })
-  renderer.run()
+  renderGraph()
 
-  fileName = jsons[0]
+  fileName = json
+}
+
+// "Open" via Menu
+ipcRenderer.on('open', (event, jsons) => {
+  openGraph(jsons[0])
 })
 
 function writeGraphToJSON(json) {
@@ -64,3 +72,42 @@ ipcRenderer.on('save', (event) => {
 ipcRenderer.on('save-as', (event, json) => {
   writeGraphToJSON(json)
 })
+
+function addElement(s, t) {
+  if (renderer !== undefined) {
+    graph.beginUpdate()
+  }
+
+  if (s === "") {
+    return
+  } else if (t === "") {
+    if (graph.getNode(t) === undefined) {
+      graph.addNode(s)
+    }
+  } else {
+    if (graph.getLink(s, t) === null) {
+      graph.addLink(s, t)
+    }
+  }
+
+  if (renderer !== undefined) {
+    graph.endUpdate()
+  } else {
+    renderGraph()
+  }
+}
+
+function removeElement(s, t) {
+  if (renderer === undefined) {
+    return
+  }
+  graph.beginUpdate()
+  if (s === "") {
+    return
+  } else if (t === "") {
+    graph.removeNode(s)
+  } else {
+    graph.removeLink(graph.getLink(s, t))
+  }
+  graph.endUpdate()
+}
