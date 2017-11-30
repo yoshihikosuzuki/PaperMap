@@ -1,4 +1,4 @@
-const {app, Menu, BrowserWindow, dialog} = require('electron')
+const {app, Menu, dialog} = require('electron')
 
 let openingFile = ""
 
@@ -6,7 +6,7 @@ function openFile(win) {
   dialog.showOpenDialog({
     filters: [{name: 'JSON', extensions: ['json']}]
   }, (fileName) => {
-    win.webContents.send('open', fileName)
+    win.webContents.send('open', fileName[0])
   })
 }
 

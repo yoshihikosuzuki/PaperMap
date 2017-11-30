@@ -2,9 +2,9 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet", type="text/css", href="vg.css">
     <link rel="stylesheet", type="text/css", href="node_modules/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet", type="text/css", href="node_modules/bootstrap/dist/css/bootstrap-theme.min.css">
+    <link rel="stylesheet", type="text/css", href="vg.css">
   </head>
   <body>
     <div class="container-fluid">
@@ -21,19 +21,12 @@
             <p id="result-add"></p>
           </div>
           <div>
-            <button class="btn btn-default btn-sm" type="button" onclick="generateLabels()">Label</button>
             <button class="btn btn-default btn-sm" type="button" onclick="graph.clear()">Clear</button>
           </div>
         </div>
       </div>
     </div>
-
     <script>window.$ = window.jQuery = require('jquery')</script>
-    <script>
-      $("#vg").on('click', function() {
-        
-      })
-    </script>
     <script src="vg.js"></script>
     <!-- <script src="vg-renderer.js"></script> -->
     <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
