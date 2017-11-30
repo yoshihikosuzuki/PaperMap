@@ -1,7 +1,10 @@
 const {ipcRenderer} = require('electron')
 const fs = require('fs')
 const fsExtra = require('fs-extra')
-const im = require('gm').subClass({imageMagick: true})
+const pdf = require('pdfjs-dist-for-node')
+const {BrowserWindow} = require('electron').remote
+const PDFWindow = require('electron-pdf-window')
+const resolve = require('path').resolve
 const Viva = require('vivagraphjs')
 
 let openingFile = ""
@@ -13,67 +16,35 @@ let renderer
 monitorChangesOnGraph()
 
 /* -----------------------------------------
-          Miscellaneous utilities
------------------------------------------ */
-
-function monitorChangesOnGraph() {
-  graph.on('changed', function(changes) {
-    console.log(changes[0]);   // prints array of change records
-  })
-}
-
-function generateThumbnail(fileName) {
-  const prefix = fileName.match(/(.*)(?:\.([^.]+$))/)[1]
-  im(fileName + "[0]").setFormat('png')
-                      .resize(400, 400)
-                      .background('white')
-                      .flatten()
-                      .write(prefix + '.png', function(err) {console.log(err)})
-}
-
-/*
-const inkscape = require('inkscape')
-const pdfToSvgConverter = new inkscape(['--export-plain-svg', '--export-width=128'])
-
-function convertPdfToSvg(fileName) {
-  const prefix = fileName.match(/(.*)(?:\.([^.]+$))/)[1]  
-  fs.createReadStream(fileName).pipe(pdfToSvgConverter).pipe(fs.createWriteStream(prefix + '.svg'))
-}
-*/
-
-/* -----------------------------------------
         PaperMap-specific appearance
 ----------------------------------------- */
 
 let nodeSize = 100
 let linkLength = 200
 
-graph.addNode('anvaka', 'hoge.png')   // relative path or absolute path starting with file:///
-graph.addNode('indexzero', 'huga.png')
-graph.addLink('anvaka', 'indexzero')
-
 // set custom node appearance
 graphics.node(function(node) {
   // The function is called every time renderer needs a ui to display node
   let ui = Viva.Graph.svg('g')
-  let svgText = Viva.Graph.svg('txt').attr('y', '-4px').text(node.id)
-  //let rect = Viva.Graph.svg('rect').attr('width', nodeSize).attr('height', nodeSize).attr('style', 'fill:rgb(255,255,255)')   // background
+  let svgText = Viva.Graph.svg('text').attr('y', '-4px').text(node.id)
   let img = Viva.Graph.svg('image')
             .attr('width', nodeSize)
             .attr('height', nodeSize)
-            .link(node.data)   // => <image xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href=node.data></image>
+            .link(node.id + '.png')   // => <image xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href=node.id></image>
   ui.append(svgText)
-  //ui.append(rect)
   ui.append(img)
   $(ui).hover(function() {   // mouse over
     highlightRelatedNodes(node.id, true)
   }, function() {   // mouse out
     highlightRelatedNodes(node.id, false)
   })
+  ui.addEventListener('click', function() {
+    openPdf(node.data.pdf)
+  })
   return ui
 }).placeNode(function(nodeUI, pos) {
   nodeUI.attr('transform',
-              'translate(' + (pos.x - nodeSize/2) + ',' + (pos.y - nodeSize/2) + ')')
+              'translate(' + (pos.x - nodeSize / 2) + ',' + (pos.y - nodeSize / 2) + ')')
 })
 
 /*
@@ -97,7 +68,7 @@ renderGraph()
             For custom appearance
 ----------------------------------------- */
 
-// set the color of related links of the node
+// set the color of related links of a node
 function highlightRelatedNodes(nodeId, isOn) {
   graph.forEachLinkedNode(nodeId, function(node, link) {
     var linkUI = graphics.getLinkUI(link.id);
@@ -121,9 +92,6 @@ function renderGraph() {
 }
 
 function addElement(s, t) {
-  if (renderer !== undefined) {
-    graph.beginUpdate()
-  }
   if (s === "") {
     return
   } else if (t === "") {
@@ -135,18 +103,9 @@ function addElement(s, t) {
       graph.addLink(s, t)
     }
   }
-  if (renderer !== undefined) {
-    graph.endUpdate()
-  } else {
-    renderGraph()
-  }
 }
 
 function removeElement(s, t) {
-  if (renderer === undefined) {
-    return
-  }
-  graph.beginUpdate()
   if (s === "") {
     return
   } else if (t === "") {
@@ -154,7 +113,6 @@ function removeElement(s, t) {
   } else {
     graph.removeLink(graph.getLink(s, t))
   }
-  graph.endUpdate()
 }
 
 function loadGraphFromJSON(json) {
@@ -163,7 +121,7 @@ function loadGraphFromJSON(json) {
   const edges = edges_and_nodes['edges']
 
   for (var i = 0; i < nodes.length; i++) {
-    graph.addNode(nodes[i]['data']['id'])
+    graph.addNode(nodes[i]['data']['id'], {pdf: nodes[i]['pdf']})   // TODO: change so that all attributions are loaded
   }
   for (var i = 0; i < edges.length; i++) {
     graph.addLink(edges[i]['data']['source'], edges[i]['data']['target'], edges[i]['data']['id'])
@@ -171,13 +129,9 @@ function loadGraphFromJSON(json) {
 }
 
 // "Open" via Menu
-ipcRenderer.on('open', (event, jsons) => {
-  if (renderer !== undefined) {
-    renderer.dispose()
-  }
+ipcRenderer.on('open', (event, json) => {
   graph.clear()
   loadGraphFromJSON(json)
-  renderGraph()
   openingFile = json
 })
 
@@ -201,3 +155,59 @@ ipcRenderer.on('save', (event) => {
 ipcRenderer.on('save-as', (event, json) => {
   writeGraphToJSON(json)
 })
+
+/* -----------------------------------------
+                  Utilities
+----------------------------------------- */
+
+function monitorChangesOnGraph() {
+  graph.on('changed', function(changes) {
+    console.log(changes[0]);   // prints array of change records
+  })
+}
+
+function generateThumbnail(fileName) {
+  const prefix = fileName.match(/(.*)(?:\.([^.]+$))/)[1]
+
+  let canvas = document.createElement('canvas')
+  let ctx = canvas.getContext('2d')
+
+  pdf.getDocument(fileName).then(function (doc) {
+    doc.getPage(1).then(function (page) {
+      let viewport = page.getViewport(1.0)
+      canvas.height = viewport.height
+      canvas.width = viewport.width
+      let renderer = {
+        canvasContext: ctx,
+        viewport: viewport
+      }
+      page.render(renderer).then(function () {
+        ctx.globalCompositeOperation = 'destination-over'
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        let image = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, '')
+        fs.writeFile(prefix + '.png', image, 'base64', function(err) {
+          if (err) {
+            console.log("[ERROR] Failed to write png.")
+          }
+        })
+      })
+    })
+  })
+}
+
+/*
+const inkscape = require('inkscape')
+const pdfToSvgConverter = new inkscape(['--export-plain-svg', '--export-width=128'])
+
+function convertPdfToSvg(fileName) {
+  const prefix = fileName.match(/(.*)(?:\.([^.]+$))/)[1]  
+  fs.createReadStream(fileName).pipe(pdfToSvgConverter).pipe(fs.createWriteStream(prefix + '.svg'))
+}
+*/
+
+function openPdf(fileName) {
+  const win = new BrowserWindow({ width: 800, height: 1000 })
+  PDFWindow.addSupport(win)
+  win.loadURL("file://" + resolve(fileName))
+}

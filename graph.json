@@ -2,52 +2,25 @@
   "nodes": [
     {
       "data": {
-        "id": "a"
+        "id": "hoge"
       },
-      "position": {
-        "x": 200,
-        "y": 289
-      },
-      "group": "nodes",
-      "removed": false,
-      "selected": false,
-      "selectable": true,
-      "locked": false,
-      "grabbable": true,
-      "classes": ""
+      "pdf": "1708.01492.pdf",
+      "title": "title hoge"
     },
     {
       "data": {
-        "id": "b"
+        "id": "huga"
       },
-      "position": {
-        "x": 600,
-        "y": 289
-      },
-      "group": "nodes",
-      "removed": false,
-      "selected": false,
-      "selectable": true,
-      "locked": false,
-      "grabbable": true,
-      "classes": ""
+      "pdf": "nrmicro.2017.137.pdf",
+      "title": "title huga"
     }
   ],
   "edges": [
     {
       "data": {
-        "id": "ab",
-        "source": "a",
-        "target": "b"
-      },
-      "position": {},
-      "group": "edges",
-      "removed": false,
-      "selected": false,
-      "selectable": true,
-      "locked": false,
-      "grabbable": true,
-      "classes": ""
+        "source": "hoge",
+        "target": "huga"
+      }
     }
   ]
 }
