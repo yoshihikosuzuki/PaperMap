@@ -1,26 +1,20 @@
 {
   "nodes": [
     {
-      "data": {
-        "id": "hoge"
-      },
+      "id": "hoge",
       "pdf": "1708.01492.pdf",
       "title": "title hoge"
     },
     {
-      "data": {
-        "id": "huga"
-      },
+      "id": "huga",
       "pdf": "nrmicro.2017.137.pdf",
       "title": "title huga"
     }
   ],
   "edges": [
     {
-      "data": {
-        "source": "hoge",
-        "target": "huga"
-      }
+      "source": "hoge",
+      "target": "huga"
     }
   ]
 }

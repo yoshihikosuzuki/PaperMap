@@ -1,13 +1,13 @@
 const {ipcRenderer} = require('electron')
+const {BrowserWindow, dialog} = require('electron').remote
 const fs = require('fs')
 const fsExtra = require('fs-extra')
-const pdf = require('pdfjs-dist-for-node')
-const {BrowserWindow} = require('electron').remote
-const PDFWindow = require('electron-pdf-window')
 const resolve = require('path').resolve
 const Viva = require('vivagraphjs')
+const pdf = require('pdfjs-dist-for-node')
+const PDFWindow = require('electron-pdf-window')
 
-let openingFile = ""
+let openingGraphFile = ""
 let graph = Viva.Graph.graph()
 let graphics = Viva.Graph.View.svgGraphics()
 let layout
@@ -30,7 +30,7 @@ graphics.node(function(node) {
   let img = Viva.Graph.svg('image')
             .attr('width', nodeSize)
             .attr('height', nodeSize)
-            .link(node.id + '.png')   // => <image xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href=node.id></image>
+            .link(node.data.png)   // => <image xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href=/path/to/png></image>
   ui.append(svgText)
   ui.append(img)
   $(ui).hover(function() {   // mouse over
@@ -38,8 +38,9 @@ graphics.node(function(node) {
   }, function() {   // mouse out
     highlightRelatedNodes(node.id, false)
   })
-  ui.addEventListener('click', function() {
-    openPdf(node.data.pdf)
+  ui.addEventListener('click', function() {   // node click
+    document.getElementById('detail').innerHTML = node.data.title
+    //openPdf(node.data.pdf)
   })
   return ui
 }).placeNode(function(nodeUI, pos) {
@@ -71,7 +72,7 @@ renderGraph()
 // set the color of related links of a node
 function highlightRelatedNodes(nodeId, isOn) {
   graph.forEachLinkedNode(nodeId, function(node, link) {
-    var linkUI = graphics.getLinkUI(link.id);
+    let linkUI = graphics.getLinkUI(link.id);
     if (linkUI) {
       linkUI.attr('stroke', isOn ? 'red' : 'grey')
     }
@@ -91,15 +92,40 @@ function renderGraph() {
   renderer.run()
 }
 
-function addElement(s, t) {
+function checkNewNode(nodeId, attributes) {
+  if (graph.getNode(nodeId)) {
+    return   // already existing nodes must be assured to have all attributes
+  }
+
+  console.log(nodeId, attributes)
+
+  return new Promise(function (resolve, reject) {
+    let title = attributes === undefined ? nodeId : attributes.title
+    let fileName = attributes === undefined || !existFile(attributes.pdf) ? requirePdf() : attributes.pdf
+    resolve(fileName)
+  }).then(function (fileName) {
+    if (!existFile(nodeId + '.png')) {
+      return generateThumbnail(fileName, nodeId)
+    }
+  }).then(function () {
+    if (!existFile(nodeId + '.png')) {
+      console.log("no png!")
+    } else {
+      console.log("png exists", fileName)
+      graph.addNode(nodeId, {pdf: resolve(fileName), png: resolve(nodeId + '.png'), title: title})
+    }
+  })
+}
+
+function addElement(s, t) {   // TODO: textboxでadd -> remove, pngも削除 -> 再度addすると消したはずのpngのサムネイルが使われる現象を直す
   if (s === "") {
     return
   } else if (t === "") {
-    if (graph.getNode(t) === undefined) {
-      graph.addNode(s)
-    }
+    checkNewNode(s)
   } else {
     if (!graph.getLink(s, t)) {
+      checkNewNode(s)
+      checkNewNode(t)
       graph.addLink(s, t)
     }
   }
@@ -120,38 +146,48 @@ function loadGraphFromJSON(json) {
   const nodes = edges_and_nodes['nodes']
   const edges = edges_and_nodes['edges']
 
-  for (var i = 0; i < nodes.length; i++) {
-    graph.addNode(nodes[i]['data']['id'], {pdf: nodes[i]['pdf']})   // TODO: change so that all attributions are loaded
-  }
-  for (var i = 0; i < edges.length; i++) {
-    graph.addLink(edges[i]['data']['source'], edges[i]['data']['target'], edges[i]['data']['id'])
-  }
+  Promise.all(nodes.map(function(node) {
+    let id = node.id
+    delete node.id
+    return checkNewNode(id, node)
+  }))
+  .then(function() {
+    for (let i = 0; i < edges.length; i++) {
+      graph.addLink(edges[i].source, edges[i].target)
+    }  
+  })
 }
-
-// "Open" via Menu
-ipcRenderer.on('open', (event, json) => {
-  graph.clear()
-  loadGraphFromJSON(json)
-  openingFile = json
-})
 
 function writeGraphToJSON(json) {
   let nodes = [], edges = []
   graph.forEachNode(function(node) {
-    nodes.push({'data': {'id': node.id}})
+    let obj = node.data
+    obj.id = node.id
+    nodes.push(obj)
   })
   graph.forEachLink(function(link) {
-    edges.push({'data': {'id': link.data, 'source': link.fromId, 'target': link.toId}})
+    edges.push({'source': link.fromId, 'target': link.toId})
   })
   fsExtra.writeJson(json, {'nodes': nodes, 'edges': edges})
 }
 
-// "Save" via Menu
-ipcRenderer.on('save', (event) => {
-  writeGraphToJSON(openingFile)
+/* -----------------------------------------
+                    Menu
+----------------------------------------- */
+
+// "Open"
+ipcRenderer.on('open', (event, json) => {
+  graph.clear()
+  loadGraphFromJSON(json)
+  openingGraphFile = json
 })
 
-// "Save As..." via Menu
+// "Save"
+ipcRenderer.on('save', (event) => {
+  writeGraphToJSON(openingGraphFile)
+})
+
+// "Save As..."
 ipcRenderer.on('save-as', (event, json) => {
   writeGraphToJSON(json)
 })
@@ -166,14 +202,31 @@ function monitorChangesOnGraph() {
   })
 }
 
-function generateThumbnail(fileName) {
-  const prefix = fileName.match(/(.*)(?:\.([^.]+$))/)[1]
+function existFile(fileName) {
+  try {
+    fs.statSync(fileName)
+    return true
+  } catch(err) {
+    if(err.code === 'ENOENT') {
+      return false
+    }
+  }
+}
+
+function requirePdf() {
+  return dialog.showOpenDialog({   // synchronous
+    filters: [{name: 'PDF', extensions: ['pdf']}]
+  })[0]
+}
+
+function generateThumbnail(inPdfFileName, outPngPrefix) {
+  //const prefix = fileName.match(/(.*)(?:\.([^.]+$))/)[1]
 
   let canvas = document.createElement('canvas')
   let ctx = canvas.getContext('2d')
 
-  pdf.getDocument(fileName).then(function (doc) {
-    doc.getPage(1).then(function (page) {
+  return pdf.getDocument('file://' + resolve(inPdfFileName)).then(function(doc) {
+    return doc.getPage(1).then(function(page) {
       let viewport = page.getViewport(1.0)
       canvas.height = viewport.height
       canvas.width = viewport.width
@@ -181,30 +234,20 @@ function generateThumbnail(fileName) {
         canvasContext: ctx,
         viewport: viewport
       }
-      page.render(renderer).then(function () {
-        ctx.globalCompositeOperation = 'destination-over'
-        ctx.fillStyle = '#ffffff'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-        let image = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, '')
-        fs.writeFile(prefix + '.png', image, 'base64', function(err) {
-          if (err) {
-            console.log("[ERROR] Failed to write png.")
-          }
+      return page.render(renderer).then(function() {
+        return new Promise(function (resolve, reject) {
+          ctx.globalCompositeOperation = 'destination-over'
+          ctx.fillStyle = '#ffffff'
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+          let image = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, '')
+          fs.writeFileSync(outPngPrefix + '.png', image, 'base64')
+          console.log("generated")
+          resolve()
         })
       })
     })
   })
 }
-
-/*
-const inkscape = require('inkscape')
-const pdfToSvgConverter = new inkscape(['--export-plain-svg', '--export-width=128'])
-
-function convertPdfToSvg(fileName) {
-  const prefix = fileName.match(/(.*)(?:\.([^.]+$))/)[1]  
-  fs.createReadStream(fileName).pipe(pdfToSvgConverter).pipe(fs.createWriteStream(prefix + '.svg'))
-}
-*/
 
 function openPdf(fileName) {
   const win = new BrowserWindow({ width: 800, height: 1000 })
