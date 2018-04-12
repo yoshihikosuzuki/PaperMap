@@ -1,8 +1,7 @@
 const {app, BrowserWindow, dialog} = require('electron')
 const path = require('path')
 const url = require('url')
-const createMenu = require('./menu-vg-only-renderer')
-//const createMenu = require('./menu-vg-main-renderer')
+const {createMenu} = require('./menu')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -14,7 +13,7 @@ function createWindow () {
 
   // and load the index.html of the app.
   win.loadURL(url.format({
-    pathname: path.join(__dirname, 'index.html'),
+    pathname: path.join(app.getAppPath(), 'index.html'),
     protocol: 'file:',
     slashes: true
   }))

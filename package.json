@@ -2,7 +2,7 @@
   "name": "PaperMap",
   "version": "1.0.0",
   "description": "Graphical Application for Paper Survey Management",
-  "main": "main.js",
+  "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,15 +11,19 @@
     "type": "git",
     "url": "git+https://github.com/yoshihikosuzuki/PaperMap.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "reference manegement",
+    "graph",
+    "network"
+  ],
+  "author": "Yoshihiko Suzuki",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/yoshihikosuzuki/PaperMap/issues"
   },
   "homepage": "https://github.com/yoshihikosuzuki/PaperMap#readme",
   "devDependencies": {
-    "electron": "^1.7.9"
+    "electron": "^1.8.4"
   },
   "dependencies": {
     "bootstrap": "^3.3.7",

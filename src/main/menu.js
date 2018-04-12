@@ -1,34 +1,13 @@
-const {app, Menu, BrowserWindow, dialog} = require('electron')
-const vg = require('./vg-main')
+const {app, Menu} = require('electron')
 
-let openingFile = ""
-
-function openFile(win) {
-  dialog.showOpenDialog({
-    filters: [{name: 'JSON', extensions: ['json']}]
-  }, (fileName) => {
-    openingFile = fileName[0]
-    vg.loadGraphFromJSON(fileName[0])
-    win.webContents.send('open')
-  })
-}
-
-function saveFileAs() {
-  dialog.showSaveDialog({
-    filters: [{name: 'JSON', extensions: ['json']}]
-  }, (fileName) => {
-    vg.writeGraphToJSON(fileName)
-  })
-}
-
-function createMenu(win) {
+module.exports.createMenu = function createMenu(win) {
   const template = [
     {
       label: "File",
       submenu: [
-        {label: "Open", accelerator: "Cmd+O", click: () => openFile(win)},
-        {label: "Save", accelerator: "Cmd+S", click: () => vg.writeGraphToJSON(openingFile)},
-        {label: "Save As...", click: () => saveFileAs()}
+        {label: "Open", accelerator: "Cmd+O", click: () => win.webContents.send('open')},
+        {label: "Save", accelerator: "Cmd+S", click: () => win.webContents.send('save')},
+        {label: "Save As...", click: () => win.webContents.send('save-as')}
       ]
     },
     {
@@ -95,5 +74,3 @@ function createMenu(win) {
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
-
-module.exports = createMenu;

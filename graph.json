@@ -1,14 +1,16 @@
 {
   "nodes": [
     {
-      "id": "hoge",
-      "pdf": "1708.01492.pdf",
-      "title": "title hoge"
+      "pdf": "/Users/yoshihikosuzuki/work/PaperMap/1708.01492.pdf",
+      "png": "/Users/yoshihikosuzuki/work/PaperMap/hoge.png",
+      "title": "title hoge",
+      "id": "hoge"
     },
     {
-      "id": "huga",
-      "pdf": "nrmicro.2017.137.pdf",
-      "title": "title huga"
+      "pdf": "/Users/yoshihikosuzuki/work/PaperMap/nrmicro.2017.137.pdf",
+      "png": "/Users/yoshihikosuzuki/work/PaperMap/huga.png",
+      "title": "title huga",
+      "id": "huga"
     }
   ],
   "edges": [
